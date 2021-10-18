@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "957645126050",
+    "firebase_url": "https://traffic-routing-73483-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "traffic-routing-73483",
+    "storage_bucket": "traffic-routing-73483.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957645126050:android:f64fae2bab72f069565afb",
+        "android_client_info": {
+          "package_name": "com.traffic_routing"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "957645126050-kt1mjpeqs6hu35ge5t3d0j45jl4uc5s3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.traffic_routing",
+            "certificate_hash": "f3c2e372424cc1b18c50595a93b638197b3f1476"
+          }
+        },
+        {
+          "client_id": "957645126050-0r5bdacti6386oo614c0gtgslhjjlvkv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_G5hxoAN0GyYaDHxaaKwk-h3xjmoA3z4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "957645126050-0r5bdacti6386oo614c0gtgslhjjlvkv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "957645126050-30l32ijutlj9ekreb8u31j6fu236hnbq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.trafficRouting"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

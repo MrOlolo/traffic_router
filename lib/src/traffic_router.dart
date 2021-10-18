@@ -55,7 +55,7 @@ class TrafficRouter {
       try {
         ///Get data from firebase database
         print('7');
-        final data = await FirebaseDatabase.instance
+        final Map? data = await FirebaseDatabase.instance
             .reference()
             .child(settings.paramNames.databaseRoot)
             .once()
@@ -69,7 +69,7 @@ class TrafficRouter {
         ///Get traffic data
         print('6');
         if (Platform.isAndroid) {
-          final String appsflyerId = data[settings.paramNames.appsflyer];
+          final String? appsflyerId = data?[settings.paramNames.appsflyer];
           final appsflyerData = await _getAppsFlyerData(appsflyerId, settings);
           String? appsflyerUid = '';
           if (_appsflyer != null) {
@@ -91,8 +91,8 @@ class TrafficRouter {
 
         ///Create request
         print('5');
-        final url = data[settings.paramNames.baseUrl1] +
-            data[settings.paramNames.baseUrl2] +
+        final url = data?[settings.paramNames.baseUrl1] +
+            data?[settings.paramNames.baseUrl2] +
             settings.paramNames.urlPath;
         print(url);
         // print(requestData);
@@ -121,7 +121,10 @@ class TrafficRouter {
         print('request_url = ' + requestUrl1);
         final requestUrl2 = (body[settings.paramNames.url21key] ?? '') +
             (body[settings.paramNames.url22key] ?? '');
-        final overrideUrl = body[settings.paramNames.overrideUrlKey] ?? false;
+        final overrideUrl = body[settings.paramNames.overrideUrlKey]
+                ?.toString()
+                .toLowerCase() ==
+            'true';
         print('3');
 
         ///Save for next launches
@@ -131,7 +134,7 @@ class TrafficRouter {
 
         ///
         print('2');
-        _instance = TrafficRouter._(requestUrl1, requestUrl1, settings);
+        _instance = TrafficRouter._(requestUrl1, overrideUrl, settings);
         print('1');
         return _instance!;
       } catch (e) {
@@ -154,7 +157,7 @@ class TrafficRouter {
     }
   }
 
-  static Future<Map> _getDeviceData(Settings settings) async {
+  static Future<Map<String, dynamic>> _getDeviceData(Settings settings) async {
     final packageName = (await PackageInfo.fromPlatform()).packageName;
     final root = Platform.isAndroid ? await RootCheck.checkForRootNative : null;
     final locale = await Devicelocale.currentLocale.catchError((err) => '');
@@ -212,17 +215,11 @@ class TrafficRouter {
         // registerOnDeepLinkingCallback: true
       );
       Map? data;
-      print('kek?');
-      _appsflyer!.onInstallConversionData((Map? res) {
-        print('callback data');
-        print(res);
+      _appsflyer!.onInstallConversionData((res) {
         data = res?['data'];
       });
 
-      print('kek3');
       await Future.delayed(const Duration(seconds: 5));
-      print('data');
-      print(data);
       if (data?[settings.paramNames.mediaSourceKey] == null &&
           data?[settings.paramNames.agencyKey] == null) {
         return null;
