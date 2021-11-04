@@ -56,6 +56,12 @@ class ParamNames {
 
   final int tabletScreenWidth;
 
+  ///Facebook keys
+  final String fbDeeplink;
+
+  ///Advertising ID
+  final String advertisingId;
+
   const ParamNames({
     this.databaseRoot = "json_cadre",
     this.baseUrl1 = "bries",
@@ -94,5 +100,7 @@ class ParamNames {
     this.webViewUrl = 'webview_url',
     this.initiated = 'initiated',
     this.tabletScreenWidth = 550,
+    this.fbDeeplink = "deep_fb",
+    this.advertisingId = "gaid",
   });
 }

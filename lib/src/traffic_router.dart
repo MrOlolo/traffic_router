@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:advertising_id/advertising_id.dart';
 import 'package:android_play_install_referrer/android_play_install_referrer.dart';
 import 'package:appsflyer_sdk/appsflyer_sdk.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -9,6 +10,7 @@ import 'package:devicelocale/devicelocale.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_app_links/flutter_facebook_app_links.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:root_check/root_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -87,7 +89,19 @@ class TrafficRouter {
           }
         }
 
-        ///
+        ///Get fb deeplink
+        if (Platform.isAndroid) {
+          print('fb');
+          final fbData = await _getFbDeeplink(settings);
+          if (fbData != null) requestData.addAll(fbData);
+        }
+
+        ///Get advertising ID
+        if (Platform.isAndroid) {
+          print('aid');
+          final adData = await _getAdvertisingData(settings);
+          if (adData != null) requestData.addAll(adData);
+        }
 
         ///Create request
         print('5');
@@ -243,6 +257,29 @@ class TrafficRouter {
     } else {
       return null;
     }
+  }
+
+  static Future<Map<String, dynamic>?> _getFbDeeplink(Settings settings) async {
+    try {
+      final link = await FlutterFacebookAppLinks.initFBLinks();
+      if (link != null) {
+        return {settings.paramNames.fbDeeplink: (link as Map?)?['deeplink']};
+      }
+    } catch (e) {
+      print("Can't get fb deeplink - $e");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> _getAdvertisingData(
+      Settings settings) async {
+    try {
+      final advertisingId = await AdvertisingId.id(true);
+      return {settings.paramNames.advertisingId: advertisingId};
+    } catch (e) {
+      print("Can't get advertising id - $e");
+    }
+    return null;
   }
 
   Future<void> routeWithNavigator(
