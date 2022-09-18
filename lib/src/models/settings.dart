@@ -56,6 +56,11 @@ class ParamNames {
 
   final int tabletScreenWidth;
 
+  ///Facebook data
+  final String facebookAppId;
+  final String facebookDisplayName;
+  final String facebookClientToken;
+
   ///Facebook keys
   final String fbDeeplink;
 
@@ -95,6 +100,9 @@ class ParamNames {
     this.campaignKey = "campaign",
     this.adgroupIdKey = "adgroup_id",
     this.isFbKey = "is_fb",
+    this.facebookAppId = 'facebook_app_id',
+    this.facebookDisplayName = 'facebook_display_name',
+    this.facebookClientToken = 'facebook_client_token',
     this.afSitedKey = "af_siteid",
     this.httpReferrerKey = "http_referrer",
     this.webViewUrl = 'webview_url',

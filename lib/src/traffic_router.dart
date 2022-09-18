@@ -10,14 +10,15 @@ import 'package:devicelocale/devicelocale.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_facebook_app_links/flutter_facebook_app_links.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_facebook_sdk/flutter_facebook_sdk.dart';
+import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:root_check/root_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sim_info/sim_info.dart';
 import 'package:traffic_router/src/models/settings.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher_string.dart';
 
 import 'vpn_connection/vpn_connection.dart';
 
@@ -58,13 +59,21 @@ class TrafficRouter {
         ///Get data from firebase database
         print('7');
         final Map? data = await FirebaseDatabase.instance
-            .reference()
-            .child(settings.paramNames.databaseRoot)
-            .once()
-            .then((json) {
-          if (json.value == null) throw StateError('Wrong JSON');
-          return json.value;
+            .ref(settings.paramNames.databaseRoot)
+            .get()
+            .then((val) {
+          if (val.value == null) {
+            print('Wrong JSON');
+            return null;
+          }
+          return val.value as Map;
         });
+
+        ///TODO add changeable facebook keys at Android
+        if (Platform.isIOS) {
+          var res = await _initFacebookSdk(data, settings.paramNames);
+          print('Facebook initialized - $res');
+        }
 
         ///
 
@@ -80,8 +89,10 @@ class TrafficRouter {
           requestData.addAll({settings.paramNames.appsflyerUid: appsflyerUid});
           if (appsflyerData == null) {
             final referrer = (await AndroidPlayInstallReferrer.installReferrer
-                        .catchError((err) => null))
-                    ?.installReferrer ??
+                        .catchError((e) {
+                  print('error at [AndroidPlayInstallReferrer]');
+                }))
+                    .installReferrer ??
                 '';
             requestData[settings.paramNames.installRefererKey] = referrer;
           } else {
@@ -111,13 +122,13 @@ class TrafficRouter {
         print(url);
         // print(requestData);
         String jsoniche = json.encode(requestData);
-        print('JSON = ' + jsoniche);
+        print('JSON = $jsoniche');
         final encodedData = base64Encode(utf8.encode(jsoniche));
         print(encodedData);
         final request = Uri.tryParse(url)?.replace(
             // path: Settings.urlPath,
             queryParameters: {settings.paramNames.queryParamName: encodedData});
-        print('request = ' + request.toString());
+        print('request = $request');
 
         if (request == null) {
           _instance = TrafficRouter._('', false, settings);
@@ -128,11 +139,11 @@ class TrafficRouter {
         print('4');
         final response = await http.get(request);
 
-        print('response = ' + response.body);
+        print('response = ${response.body}');
         final body = jsonDecode(response.body);
         final requestUrl1 = (body[settings.paramNames.url11key] ?? '') +
             (body[settings.paramNames.url12key] ?? '');
-        print('request_url = ' + requestUrl1);
+        print('request_url = $requestUrl1');
         final requestUrl2 = (body[settings.paramNames.url21key] ?? '') +
             (body[settings.paramNames.url22key] ?? '');
         final overrideUrl = body[settings.paramNames.overrideUrlKey]
@@ -160,12 +171,8 @@ class TrafficRouter {
   }
 
   Future<void> _launchInBrowser(String url) async {
-    if (await canLaunch(url)) {
-      await launch(
-        url,
-        forceSafariVC: false,
-        forceWebView: false,
-      );
+    if (await canLaunchUrlString(url)) {
+      await launchUrlString(url, mode: LaunchMode.externalApplication);
     } else {
       throw 'Could not launch $url';
     }
@@ -188,7 +195,7 @@ class TrafficRouter {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
       deviceInfo = '${androidInfo.brand} ${androidInfo.model}';
       try {
-        isTablet = MediaQueryData.fromWindow(WidgetsBinding.instance!.window)
+        isTablet = MediaQueryData.fromWindow(WidgetsBinding.instance.window)
                 .size
                 .shortestSide >
             settings.paramNames.tabletScreenWidth;
@@ -261,9 +268,9 @@ class TrafficRouter {
 
   static Future<Map<String, dynamic>?> _getFbDeeplink(Settings settings) async {
     try {
-      final link = await FlutterFacebookAppLinks.initFBLinks();
+      final link = await FlutterFacebookSdk().getDeepLinkUrl;
       if (link != null) {
-        return {settings.paramNames.fbDeeplink: (link as Map?)?['deeplink']};
+        return {settings.paramNames.fbDeeplink: link};
       }
     } catch (e) {
       print("Can't get fb deeplink - $e");
@@ -305,6 +312,22 @@ class TrafficRouter {
             ),
             (route) => false);
       }
+    }
+  }
+
+  static Future<bool> _initFacebookSdk(Map? data, ParamNames paramNames) async {
+    try {
+      FlutterFacebookSdk fbSdk = FlutterFacebookSdk();
+      final res = await fbSdk.initializeSDK(
+        appId: data?[paramNames.facebookAppId] ?? 'DefaultAppID',
+        displayName: data?[paramNames.facebookDisplayName] ?? 'DefaultFbId',
+        clientToken:
+            data?[paramNames.facebookClientToken] ?? 'DefaultClientToken',
+      );
+      return res;
+    } on PlatformException catch (e) {
+      print('[TrafficRouter._initFacebookSdk]: error occurred $e');
+      return false;
     }
   }
 }

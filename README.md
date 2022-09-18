@@ -53,29 +53,35 @@ apply plugin: 'com.google.gms.google-services'
 For Android configuration, you can follow the same instructions of the Flutter Facebook App Events
 plugin:
 Read through
-the "[Getting Started with App Events for Android](https://developers.facebook.com/docs/app-events/getting-started-app-events-android)"
+the "[Getting Started with Facebook SDK for Android](https://developers.facebook.com/docs/android/)"
 tutorial and in particular,
-follow [step 2](https://developers.facebook.com/docs/app-events/getting-started-app-events-android#2--add-your-facebook-app-id)
-by adding the following into `/app/res/values/strings.xml` (or into respective `debug` or `release`
-build flavor)
 
-```xml
+* Add the following to your strings.xml file
 
-<string name="facebook_app_id">[APP_ID]</string>
 ```
 
-After that, add that string resource reference to your main `AndroidManifest.xml` file:
+<string name="facebook_app_id">[APP_ID]</string>
+<string name="facebook_client_token">[CLIENT_TOKEN]</string>
 
-```xml
+```
 
-<meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id" />
+* Add the following `meta-data` to the `application` element in AndroidManifest.xml
+
+```
+
+<application android:label="@string/app_name" ...>
+    ...
+    <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/><meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>
+    ...
+</application>
+
 ```
 
 #### Common settings
 
 Add this permissions to your `AndroidManifest.xml` file:
 
-```xml
+```
 
 <uses-permission android:name="android.permission.INTERNET" />
 
@@ -148,35 +154,27 @@ by opening `info.plist` "As Source Code" and add the following
 * If your code does not have `CFBundleURLTypes`, add the following just before the final `</dict>`
   element:
 
-```xml
-
-<key>CFBundleURLTypes</key><array>
-<dict>
-    <key>CFBundleURLSchemes</key>
-    <array>
-        <string>fb[APP_ID]</string>
-    </array>
-</dict>
-</array><key>FacebookAppID</key><string>[APP_ID]</string><key>FacebookDisplayName</key><string>
-[APP_NAME]
-</string>
 ```
-
-* If your code already contains `CFBundleURLTypes`, insert the following:
-
- ```xml
-
-<array>
-    <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-            <string>fb[APP_ID]</string>
-        </array>
-    </dict>
-</array><key>FacebookAppID</key><string>[APP_ID]</string><key>FacebookDisplayName</key><string>
-[APP_NAME]
-</string>
- ```
+ <key>CFBundleURLTypes</key>
+ <array>
+   <dict>
+   <key>CFBundleURLSchemes</key>
+   <array>
+     <string>fb[APP_ID]</string>
+   </array>
+   </dict>
+ </array>
+ <key>FacebookAppID</key>
+ <string>[APP_ID]</string>
+ <key>FacebookClientToken</key>
+ <string>[CLIENT_TOKEN]</string>
+ <key>FacebookDisplayName</key>
+ <string>[APP_NAME]</string>
+ <key>FacebookAutoLogAppEventsEnabled</key>
+ <true/>
+ <key>FacebookAdvertiserIDCollectionEnabled</key>
+ <false/>
+```
 
 ## Usage
 
