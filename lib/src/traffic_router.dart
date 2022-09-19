@@ -25,7 +25,7 @@ import 'vpn_connection/vpn_connection.dart';
 class TrafficRouter {
   final String url;
   final bool override;
-  final Settings settings;
+  final RouterSettings settings;
 
   static AppsflyerSdk? _appsflyer;
 
@@ -34,7 +34,8 @@ class TrafficRouter {
   TrafficRouter._(this.url, this.override, this.settings);
 
   static Future<TrafficRouter> initialize(
-      {Settings settings = const Settings()}) async {
+      {RouterSettings settings = const RouterSettings()}) async {
+    print(settings.libs.toString());
     if (_instance != null) return _instance!;
 
     final prefs = await SharedPreferences.getInstance();
@@ -70,45 +71,49 @@ class TrafficRouter {
         });
 
         ///TODO add changeable facebook keys at Android
-        if (Platform.isIOS) {
+        if (settings.libs.useFacebook && settings.libs.useFacebookChangeable) {
           var res = await _initFacebookSdk(data, settings.paramNames);
-          print('Facebook initialized - $res');
+          print('FacebookChangeable initialized - $res');
         }
 
         ///
 
         ///Get traffic data
         print('6');
-        if (Platform.isAndroid) {
+        if (settings.libs.useAppsFlyer) {
           final String? appsflyerId = data?[settings.paramNames.appsflyer];
-          final appsflyerData = await _getAppsFlyerData(appsflyerId, settings);
+          final String? iosAppId = data?[settings.paramNames.iosAppId];
+          final appsflyerData =
+              await _getAppsFlyerData(appsflyerId, iosAppId, settings);
           String? appsflyerUid = '';
-          if (_appsflyer != null) {
+          if (_appsflyer != null && settings.libs.getAppsFlyerUID) {
             appsflyerUid = await _appsflyer!.getAppsFlyerUID();
           }
           requestData.addAll({settings.paramNames.appsflyerUid: appsflyerUid});
           if (appsflyerData == null) {
-            final referrer = (await AndroidPlayInstallReferrer.installReferrer
-                        .catchError((e) {
-                  print('error at [AndroidPlayInstallReferrer]');
-                }))
-                    .installReferrer ??
-                '';
-            requestData[settings.paramNames.installRefererKey] = referrer;
+            if (settings.libs.useAndroidInstallReferrer) {
+              final referrer = (await AndroidPlayInstallReferrer.installReferrer
+                          .catchError((e) {
+                    print('error at [AndroidPlayInstallReferrer]');
+                  }))
+                      .installReferrer ??
+                  '';
+              requestData[settings.paramNames.installRefererKey] = referrer;
+            }
           } else {
             requestData.addAll(appsflyerData);
           }
         }
 
         ///Get fb deeplink
-        if (Platform.isAndroid) {
+        if (settings.libs.useFacebook && settings.libs.useFacebookDeeplink) {
           print('fb');
           final fbData = await _getFbDeeplink(settings);
           if (fbData != null) requestData.addAll(fbData);
         }
 
         ///Get advertising ID
-        if (Platform.isAndroid) {
+        if (settings.libs.collectAID) {
           print('aid');
           final adData = await _getAdvertisingData(settings);
           if (adData != null) requestData.addAll(adData);
@@ -178,43 +183,69 @@ class TrafficRouter {
     }
   }
 
-  static Future<Map<String, dynamic>> _getDeviceData(Settings settings) async {
-    final packageName = (await PackageInfo.fromPlatform()).packageName;
-    final root = Platform.isAndroid ? await RootCheck.checkForRootNative : null;
-    final locale = await Devicelocale.currentLocale.catchError((err) => '');
-    final batteryLevel = await Battery().batteryLevel.catchError((err) => 0);
-    final batteryCharging = (await Battery()
-            .onBatteryStateChanged
-            .first
-            .catchError((err) => BatteryState.unknown)) ==
-        BatteryState.charging;
+  static Future<Map<String, dynamic>> _getDeviceData(
+      RouterSettings settings) async {
+    String? packageName;
+    if (settings.libs.collectPackageName) {
+      packageName = (await PackageInfo.fromPlatform()).packageName;
+    }
+
+    bool? root;
+    if (settings.libs.checkRootStatus) {
+      root = Platform.isAndroid ? await RootCheck.checkForRootNative : null;
+    }
+
+    String? locale;
+    if (settings.libs.collectLocale) {
+      locale = await Devicelocale.currentLocale.catchError((err) => '');
+    }
+
+    int? batteryLevel;
+    bool? batteryCharging;
+    if (settings.libs.collectBatteryInfo) {
+      batteryCharging = (await Battery()
+              .onBatteryStateChanged
+              .first
+              .catchError((err) => BatteryState.unknown)) ==
+          BatteryState.charging;
+      batteryLevel = await Battery().batteryLevel.catchError((err) => 0);
+    }
 
     String? deviceInfo;
     bool? isTablet;
-    if (Platform.isAndroid) {
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      deviceInfo = '${androidInfo.brand} ${androidInfo.model}';
-      try {
-        isTablet = MediaQueryData.fromWindow(WidgetsBinding.instance.window)
-                .size
-                .shortestSide >
-            settings.paramNames.tabletScreenWidth;
-      } catch (_) {
-        print("Can't get device screen size");
+    if (settings.libs.collectDeviceInfo) {
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        deviceInfo = '${androidInfo.brand} ${androidInfo.model}';
+        try {
+          isTablet = MediaQueryData.fromWindow(WidgetsBinding.instance.window)
+                  .size
+                  .shortestSide >
+              settings.paramNames.tabletScreenWidth;
+        } catch (_) {
+          print("Can't get device screen size");
+        }
+      } else if (Platform.isIOS) {
+        final iosInfo = await DeviceInfoPlugin().iosInfo;
+        deviceInfo = iosInfo.utsname.machine;
+        isTablet = iosInfo.model?.toLowerCase().contains('ipad') ?? false;
       }
-    } else if (Platform.isIOS) {
-      final iosInfo = await DeviceInfoPlugin().iosInfo;
-      deviceInfo = iosInfo.utsname.machine;
-      isTablet = iosInfo.model?.toLowerCase().contains('ipad') ?? false;
     }
-    final mno = await SimInfo.getCarrierName.catchError((err) => 'undefined');
-    final vpn =
-        await CheckVpnConnection.isVpnActive().catchError((err) => false);
+
+    String? mno;
+    if (settings.libs.collectMnoInfo) {
+      mno = await SimInfo.getCarrierName.catchError((err) => 'undefined');
+    }
+
+    bool? vpn;
+    if (settings.libs.checkVpnStatus) {
+      vpn = await CheckVpnConnection.isVpnActive().catchError((err) => false);
+    }
 
     // print(data.toString());
     return {
-      settings.paramNames.mnoKey: mno.toString(),
-      settings.paramNames.bundleKey: packageName.toString(),
+      settings.paramNames.mnoKey: mno?.toString(),
+      settings.paramNames.bundleKey: packageName?.toString(),
       settings.paramNames.batteryPercentageKey: batteryLevel,
       settings.paramNames.batteryStateKey: batteryCharging,
       settings.paramNames.deviceNameKey: deviceInfo,
@@ -226,15 +257,20 @@ class TrafficRouter {
   }
 
   static Future<Map<String, dynamic>?> _getAppsFlyerData(
-      String? id, Settings settings) async {
+      String? id, String? appId, RouterSettings settings) async {
     if (id?.isNotEmpty ?? false) {
       print('kek');
-      _appsflyer = AppsflyerSdk(AppsFlyerOptions(afDevKey: id!));
+      _appsflyer =
+          AppsflyerSdk(AppsFlyerOptions(afDevKey: id!, appId: appId ?? ''));
       await _appsflyer!.initSdk(
-        registerConversionDataCallback: true,
+        registerConversionDataCallback:
+            settings.libs.getAppsflyerRegisterConversionDataCallback,
         // registerOnAppOpenAttributionCallback: true,
         // registerOnDeepLinkingCallback: true
       );
+      if (!settings.libs.getAppsflyerRegisterConversionDataCallback) {
+        return null;
+      }
       Map? data;
       _appsflyer!.onInstallConversionData((res) {
         data = res?['data'];
@@ -266,7 +302,8 @@ class TrafficRouter {
     }
   }
 
-  static Future<Map<String, dynamic>?> _getFbDeeplink(Settings settings) async {
+  static Future<Map<String, dynamic>?> _getFbDeeplink(
+      RouterSettings settings) async {
     try {
       final link = await FlutterFacebookSdk().getDeepLinkUrl;
       if (link != null) {
@@ -279,7 +316,7 @@ class TrafficRouter {
   }
 
   static Future<Map<String, dynamic>?> _getAdvertisingData(
-      Settings settings) async {
+      RouterSettings settings) async {
     try {
       final advertisingId = await AdvertisingId.id(true);
       return {settings.paramNames.advertisingId: advertisingId};

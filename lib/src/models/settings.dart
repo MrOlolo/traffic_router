@@ -1,10 +1,161 @@
-class Settings {
+import 'dart:io';
+
+import 'package:equatable/equatable.dart';
+
+class RouterSettings {
   final ParamNames paramNames;
 
-  const Settings({this.paramNames = const ParamNames()});
+  final LibsPlatformSettings _libsSettings;
+
+  const RouterSettings({
+    this.paramNames = const ParamNames(),
+    LibsPlatformSettings libsSettings = const LibsPlatformSettings(),
+  }) : _libsSettings = libsSettings;
+
+  LibSettings get libs => _libsSettings.settings;
+}
+
+class LibsPlatformSettings {
+  final IOSLibSettings iosLibSettings;
+  final AndroidLibSettings androidLibSettings;
+
+  const LibsPlatformSettings(
+      {this.iosLibSettings = const IOSLibSettings(),
+      this.androidLibSettings = const AndroidLibSettings()});
+
+  LibSettings get settings =>
+      Platform.isIOS ? iosLibSettings : androidLibSettings;
+}
+
+class LibSettings with EquatableMixin {
+  final bool collectDeviceInfo;
+  final bool collectPackageName;
+  final bool collectLocale;
+  final bool collectBatteryInfo;
+  final bool checkRootStatus;
+  final bool collectMnoInfo;
+  final bool checkVpnStatus;
+  final bool useAppsFlyer;
+  final bool getAppsFlyerUID;
+  final bool getAppsflyerRegisterConversionDataCallback;
+  final bool useFacebook;
+  final bool useFacebookChangeable;
+  final bool useFacebookDeeplink;
+
+  ///ads id
+  final bool collectAID;
+  final bool useAndroidInstallReferrer;
+
+  const LibSettings(
+      {required this.collectDeviceInfo,
+      required this.collectPackageName,
+      required this.collectLocale,
+      required this.checkRootStatus,
+      required this.collectBatteryInfo,
+      required this.collectMnoInfo,
+      required this.checkVpnStatus,
+      required this.useAppsFlyer,
+      required this.getAppsFlyerUID,
+      required this.getAppsflyerRegisterConversionDataCallback,
+      required this.useFacebook,
+      required this.useFacebookChangeable,
+      required this.useFacebookDeeplink,
+      required this.collectAID,
+      required this.useAndroidInstallReferrer});
+
+  @override
+  List<Object?> get props => [
+        collectDeviceInfo,
+        collectPackageName,
+        collectLocale,
+        collectBatteryInfo,
+        checkRootStatus,
+        collectMnoInfo,
+        checkVpnStatus,
+        useAppsFlyer,
+        getAppsFlyerUID,
+        getAppsflyerRegisterConversionDataCallback,
+        useFacebook,
+        useFacebookChangeable,
+        useFacebookDeeplink,
+        collectAID,
+        useAndroidInstallReferrer,
+      ];
+}
+
+class IOSLibSettings extends LibSettings {
+  const IOSLibSettings({
+    bool collectDeviceInfo = true,
+    bool collectBatteryInfo = true,
+    bool collectPackageName = true,
+    bool collectLocale = true,
+    bool collectMnoInfo = true,
+    bool checkVpnStatus = true,
+    bool useAppsFlyer = true,
+    bool getAppsflyerUID = false,
+    bool getAppsflyerRegisterConversionDataCallback = false,
+    bool useFacebook = true,
+    bool useFacebookChangeable = true,
+    bool useFacebookDeeplink = false,
+    bool getADsID = false,
+  }) : super(
+            collectDeviceInfo: collectDeviceInfo,
+            checkRootStatus: false,
+            collectLocale: collectLocale,
+            collectPackageName: collectPackageName,
+            collectBatteryInfo: collectBatteryInfo,
+            collectMnoInfo: collectMnoInfo,
+            checkVpnStatus: checkVpnStatus,
+            useAppsFlyer: useAppsFlyer,
+            getAppsFlyerUID: getAppsflyerUID,
+            getAppsflyerRegisterConversionDataCallback:
+                getAppsflyerRegisterConversionDataCallback,
+            useFacebook: useFacebook,
+            useFacebookChangeable: useFacebookChangeable,
+            useFacebookDeeplink: useFacebookDeeplink,
+            collectAID: getADsID,
+            useAndroidInstallReferrer: false);
+}
+
+class AndroidLibSettings extends LibSettings {
+  const AndroidLibSettings(
+      {bool collectDeviceInfo = true,
+      bool checkRootStatus = true,
+      bool collectBatteryInfo = true,
+      bool collectPackageName = true,
+      bool collectLocale = true,
+      bool collectMnoInfo = true,
+      bool checkVpnStatus = true,
+      bool useAppsFlyer = true,
+      bool getAppsflyerUID = true,
+      bool getAppsflyerRegisterConversionDataCallback = true,
+      bool useFacebook = true,
+      bool useFacebookDeeplink = true,
+      bool getADsID = true,
+      bool useAndroidInstallReferrer = true})
+      : super(
+            collectDeviceInfo: collectDeviceInfo,
+            checkRootStatus: checkRootStatus,
+            collectBatteryInfo: collectBatteryInfo,
+            collectLocale: collectLocale,
+            collectPackageName: collectPackageName,
+            collectMnoInfo: collectMnoInfo,
+            checkVpnStatus: checkVpnStatus,
+            useAppsFlyer: useAppsFlyer,
+            getAppsFlyerUID: getAppsflyerUID,
+            getAppsflyerRegisterConversionDataCallback:
+                getAppsflyerRegisterConversionDataCallback,
+            useFacebook: useFacebook,
+            useFacebookChangeable: false,
+            useFacebookDeeplink: useFacebookDeeplink,
+            collectAID: getADsID,
+            useAndroidInstallReferrer: useAndroidInstallReferrer);
 }
 
 class ParamNames {
+  ///
+  final String iosAppId;
+
   ///Firebase data
   final String databaseRoot;
   final String baseUrl1;
@@ -68,6 +219,7 @@ class ParamNames {
   final String advertisingId;
 
   const ParamNames({
+    this.iosAppId = 'ios_app_id',
     this.databaseRoot = "json_cadre",
     this.baseUrl1 = "bries",
     this.baseUrl2 = "gents",

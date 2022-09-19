@@ -1,6 +1,6 @@
 name: traffic_router
 description: Route to different app pages based on traffic
-version: 0.1.0
+version: 0.2.0
 publish_to: none
 
 environment:
@@ -29,6 +29,7 @@ dependencies:
   flutter_facebook_sdk:
     git:
       url: https://github.com/MrOlolo/flutter_facebook_sdk
+  equatable: ^2.0.5
 
 
 dev_dependencies:
