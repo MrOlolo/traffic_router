@@ -1,6 +1,6 @@
 name: traffic_router
 description: Route to different app pages based on traffic
-version: 0.2.0
+version: 0.2.1
 publish_to: none
 
 environment:
@@ -11,19 +11,19 @@ dependencies:
   flutter:
     sdk: flutter
   appsflyer_sdk: ^6.8.2
-  firebase_database: ^9.1.4
-  firebase_core: ^1.22.0
+  firebase_database: ^10.0.4
+  firebase_core: ^2.1.1
   android_play_install_referrer: ^0.2.1
-  device_info_plus: ^4.1.2
+  device_info_plus: ^8.0.0
   shared_preferences: ^2.0.15
   devicelocale: 0.5.2
   sim_info:
     git:
       url: https://github.com/arefhosseini/flutter_sim_info
-  package_info_plus: ^1.4.3+1
+  package_info_plus: ^3.0.1
   http: ^0.13.5
-  url_launcher: ^6.1.5
-  battery_plus: ^2.1.4+1
+  url_launcher: ^6.1.6
+  battery_plus: ^3.0.2
   root_check: ^0.0.2+1
   advertising_id: ^2.3.0
   flutter_facebook_sdk:
